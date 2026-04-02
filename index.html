@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tasks</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+  <div class="noise"></div>
+
+  <main class="container">
+    <header>
+      <div class="header-top">
+        <span class="tag">TASK MANAGER</span>
+        <span class="date" id="current-date"></span>
+      </div>
+      <h1>DO.<br>THE.<br>WORK.<br>YOUR.<BR>WAY.</BR></h1>
+      <div class="stats-bar">
+        <div class="stat">
+          <span class="stat-num" id="total-count">0</span>
+          <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-num" id="done-count">0</span>
+          <span class="stat-label">Done</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-num" id="left-count">0</span>
+          <span class="stat-label">Left</span>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        </div>
+      </div>
+    </header>
+
+    <section class="input-section">
+      <div class="input-wrap">
+        <input type="text" id="task-input" placeholder="Add a new task..." maxlength="80" autocomplete="off"/>
+        <button id="add-btn" aria-label="Add task">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <line x1="10" y1="3" x2="10" y2="17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="3" y1="10" x2="17" y2="10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <section class="filter-bar">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="active">Active</button>
+      <button class="filter-btn" data-filter="done">Done</button>
+      <button class="clear-btn" id="clear-done">Clear Done</button>
+    </section>
+
+    <ul class="task-list" id="task-list">
+      <!-- tasks injected here -->
+    </ul>
+
+    <div class="empty-state" id="empty-state">
+      <span class="empty-icon">◎</span>
+      <p>Nothing here yet.<br/>Add your first task above.</p>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
