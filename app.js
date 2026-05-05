@@ -20,11 +20,14 @@ const clearDoneBtn = document.getElementById('clear-done');
 const filterBtns  = document.querySelectorAll('.filter-btn');
 const themeToggle = document.getElementById('theme-toggle');
 const aiToggle = document.getElementById('ai-toggle');
+const assistantOpen = document.getElementById('assistant-open');
 const aiClose = document.getElementById('ai-close');
+const aiClear = document.getElementById('ai-clear');
 const aiPanel = document.getElementById('ai-panel');
 const aiMessagesEl = document.getElementById('ai-messages');
 const aiInput = document.getElementById('ai-input');
 const aiSend = document.getElementById('ai-send');
+const promptChips = document.querySelectorAll('.prompt-chip');
 const particles = document.getElementById('particles');
 
 // ── Date ─────────────────────────────────────────────────
@@ -198,7 +201,22 @@ function createParticles() {
 }
 
 function renderAIMessages() {
-  aiMessagesEl.innerHTML = aiMessages.map(m => '<div class="ai-message ' + m.role + '">' + m.text.replace(/\\n/g, '<br>') + '</div>').join('');
+  aiMessagesEl.innerHTML = '';
+
+  if (aiMessages.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'ai-empty';
+    empty.innerHTML = '<strong>Ready when you are.</strong><span>Ask for priorities, subtasks, or a focused plan from your current list.</span>';
+    aiMessagesEl.appendChild(empty);
+  } else {
+    aiMessages.forEach(message => {
+      const bubble = document.createElement('div');
+      bubble.className = 'ai-message ' + message.role;
+      bubble.textContent = message.text;
+      aiMessagesEl.appendChild(bubble);
+    });
+  }
+
   aiMessagesEl.scrollTop = aiMessagesEl.scrollHeight;
   localStorage.setItem('aiMessages', JSON.stringify(aiMessages.slice(-50)));
 }
@@ -235,14 +253,37 @@ async function sendAIMessage() {
   aiMessages.push({role: 'user', text});
   renderAIMessages();
   aiInput.value = '';
+  aiInput.disabled = true;
+  aiSend.disabled = true;
   const spinner = document.createElement('div');
-  spinner.className = 'ai-message ai';
-  spinner.textContent = 'AI thinking...';
+  spinner.className = 'ai-message ai loading';
+  spinner.textContent = 'Thinking...';
   aiMessagesEl.appendChild(spinner);
   aiMessagesEl.scrollTop = aiMessagesEl.scrollHeight;
   const response = await callGemini(text);
-  aiMessagesEl.removeChild(spinner);
+  spinner.remove();
   aiMessages.push({role: 'ai', text: response});
+  aiInput.disabled = false;
+  aiSend.disabled = false;
+  aiInput.focus();
+  renderAIMessages();
+}
+
+function openAssistant(prompt) {
+  aiPanel.classList.add('open');
+  aiPanel.setAttribute('aria-hidden', 'false');
+  if (prompt) aiInput.value = prompt;
+  aiInput.focus();
+}
+
+function closeAssistant() {
+  aiPanel.classList.remove('open');
+  aiPanel.setAttribute('aria-hidden', 'true');
+}
+
+function clearAIHistory() {
+  aiMessages = [];
+  localStorage.removeItem('aiMessages');
   renderAIMessages();
 }
 
@@ -267,14 +308,28 @@ input.addEventListener('keydown', e => {
 themeToggle.addEventListener('click', toggleTheme);
 
 // AI Chat
-aiToggle.addEventListener('click', () => aiPanel.classList.toggle('open'));
-aiClose.addEventListener('click', () => aiPanel.classList.remove('open'));
+aiToggle.addEventListener('click', () => {
+  if (aiPanel.classList.contains('open')) {
+    closeAssistant();
+  } else {
+    openAssistant();
+  }
+});
+assistantOpen.addEventListener('click', () => openAssistant());
+aiClose.addEventListener('click', closeAssistant);
+aiClear.addEventListener('click', clearAIHistory);
 aiSend.addEventListener('click', sendAIMessage);
 aiInput.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     sendAIMessage();
   }
+});
+promptChips.forEach(chip => {
+  chip.addEventListener('click', () => openAssistant(chip.dataset.prompt));
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeAssistant();
 });
 
 function init() {
