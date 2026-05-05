@@ -1,8 +1,11 @@
-/* ── To-Do App — app.js ── */
+/* ── AI Todo Manager — app.js ── */
 
 // ── State ────────────────────────────────────────────────
 let tasks  = JSON.parse(localStorage.getItem('tasks') || '[]');
 let filter = 'all';
+let currentTheme = localStorage.getItem('theme') || 'dark';
+let apiKey = localStorage.getItem('geminiApiKey') || '';
+let aiMessages = JSON.parse(localStorage.getItem('aiMessages') || '[]');
 
 // ── DOM Refs ─────────────────────────────────────────────
 const input       = document.getElementById('task-input');
@@ -16,6 +19,18 @@ const progressEl  = document.getElementById('progress-fill');
 const dateEl      = document.getElementById('current-date');
 const clearDoneBtn = document.getElementById('clear-done');
 const filterBtns  = document.querySelectorAll('.filter-btn');
+const themeToggle = document.getElementById('theme-toggle');
+const aiToggle = document.getElementById('ai-toggle');
+const aiClose = document.getElementById('ai-close');
+const aiPanel = document.getElementById('ai-panel');
+const aiMessagesEl = document.getElementById('ai-messages');
+const aiInput = document.getElementById('ai-input');
+const aiSend = document.getElementById('ai-send');
+const apiKeyModal = document.getElementById('api-key-modal');
+const apiKeyForm = document.getElementById('api-key-form');
+const apiKeyInput = document.getElementById('api-key-input');
+const skipKey = document.getElementById('skip-key');
+const particles = document.getElementById('particles');
 
 // ── Date ─────────────────────────────────────────────────
 (function setDate() {
@@ -69,10 +84,8 @@ function deleteTask(id, li) {
 
 // ── Clear Done ───────────────────────────────────────────
 function clearDone() {
-  // Animate all done items out first
   const doneItems = list.querySelectorAll('.task-item.done');
   if (!doneItems.length) return;
-
   let remaining = doneItems.length;
   doneItems.forEach((li, i) => {
     setTimeout(() => {
@@ -102,7 +115,6 @@ function buildTaskEl(task) {
   li.className = 'task-item' + (task.done ? ' done' : '');
   li.dataset.id = task.id;
 
-  // Checkbox
   const check = document.createElement('div');
   check.className = 'task-check';
   check.setAttribute('role', 'checkbox');
@@ -115,12 +127,10 @@ function buildTaskEl(task) {
   check.addEventListener('click', () => toggleTask(task.id));
   check.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggleTask(task.id); } });
 
-  // Text
   const span = document.createElement('span');
   span.className = 'task-text';
   span.textContent = task.text;
 
-  // Delete
   const del = document.createElement('button');
   del.className = 'task-delete';
   del.setAttribute('aria-label', 'Delete task');
@@ -165,6 +175,91 @@ function render() {
   updateStats();
 }
 
+// ── Theme, Particles, AI Functions ───────────────────────────────────────
+
+function toggleTheme() {
+  const themes = ['dark', 'light'];
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = currentTheme;
+  localStorage.setItem('theme', currentTheme);
+}
+
+function createParticles() {
+  particles.innerHTML = '';
+  let count = 0;
+  const spawnParticle = () => {
+    if (count < 40) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (Math.random() * 10 + 15) + 's';
+      p.style.animationDelay = Math.random() * 5 + 's';
+      particles.appendChild(p);
+      count++;
+    }
+    setTimeout(spawnParticle, Math.random() * 2000 + 1000);
+  };
+  spawnParticle();
+}
+
+function renderAIMessages() {
+  aiMessagesEl.innerHTML = aiMessages.map(m => '<div class="ai-message ' + m.role + '">' + m.text.replace(/\\n/g, '<br>') + '</div>').join('');
+  aiMessagesEl.scrollTop = aiMessagesEl.scrollHeight;
+  localStorage.setItem('aiMessages', JSON.stringify(aiMessages.slice(-50)));
+}
+
+async function callGemini(prompt) {
+  if (!apiKey) {
+    return 'Please set Gemini API key for real AI. Mock: Good idea for "' + prompt + '"! Priority: high. Subtasks: 1. Plan 2. Execute 3. Review.';
+  }
+  try {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: "You are an AI Todo Assistant. Current tasks: " + JSON.stringify(tasks.slice(0,10)) + ". Use context for knowledge, decisions, breakdowns, priorities. Query: " + prompt + ". Be concise, actionable. Use markdown for lists."
+          }]
+        }]
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      const message = data.error && data.error.message ? data.error.message : 'Unknown Gemini API error';
+      console.error('Gemini API error:', data);
+      return 'Gemini API error: ' + message;
+    }
+    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+      return data.candidates[0].content.parts[0].text;
+    }
+  } catch (e) {
+    console.error('AI error:', e);
+    return 'Network error while calling Gemini: ' + e.message;
+  }
+  return 'Gemini returned no text. Please check the browser console for details.';
+}
+
+async function sendAIMessage() {
+  const text = aiInput.value.trim();
+  if (!text) return;
+  aiMessages.push({role: 'user', text});
+  renderAIMessages();
+  aiInput.value = '';
+  const spinner = document.createElement('div');
+  spinner.className = 'ai-message ai';
+  spinner.textContent = 'AI thinking...';
+  aiMessagesEl.appendChild(spinner);
+  aiMessagesEl.scrollTop = aiMessagesEl.scrollHeight;
+  const response = await callGemini(text);
+  aiMessagesEl.removeChild(spinner);
+  aiMessages.push({role: 'ai', text: response});
+  renderAIMessages();
+}
+
 // ── Filter Buttons ───────────────────────────────────────
 filterBtns.forEach(btn => {
   btn.addEventListener('click', () => {
@@ -182,5 +277,41 @@ input.addEventListener('keydown', e => {
   if (e.key === 'Enter') addTask();
 });
 
-// ── Init ─────────────────────────────────────────────────
-render();
+// Theme
+themeToggle.addEventListener('click', toggleTheme);
+
+// AI Chat
+aiToggle.addEventListener('click', () => aiPanel.classList.toggle('open'));
+aiClose.addEventListener('click', () => aiPanel.classList.remove('open'));
+aiSend.addEventListener('click', sendAIMessage);
+aiInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendAIMessage();
+  }
+});
+
+// API Key Modal
+apiKeyForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  apiKey = apiKeyInput.value.trim();
+  if (apiKey) {
+    localStorage.setItem('geminiApiKey', apiKey);
+  }
+  apiKeyModal.classList.add('hidden');
+});
+skipKey.addEventListener('click', () => apiKeyModal.classList.add('hidden'));
+
+function init() {
+  document.documentElement.dataset.theme = currentTheme;
+  if (!apiKey) {
+    apiKeyModal.classList.remove('hidden');
+  } else {
+    apiKeyInput.value = apiKey;
+  }
+  renderAIMessages();
+  createParticles();
+  render();
+}
+
+init();
