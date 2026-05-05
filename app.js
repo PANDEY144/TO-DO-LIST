@@ -4,7 +4,6 @@
 let tasks  = JSON.parse(localStorage.getItem('tasks') || '[]');
 let filter = 'all';
 let currentTheme = localStorage.getItem('theme') || 'dark';
-let apiKey = localStorage.getItem('geminiApiKey') || '';
 let aiMessages = JSON.parse(localStorage.getItem('aiMessages') || '[]');
 
 // ── DOM Refs ─────────────────────────────────────────────
@@ -26,10 +25,6 @@ const aiPanel = document.getElementById('ai-panel');
 const aiMessagesEl = document.getElementById('ai-messages');
 const aiInput = document.getElementById('ai-input');
 const aiSend = document.getElementById('ai-send');
-const apiKeyModal = document.getElementById('api-key-modal');
-const apiKeyForm = document.getElementById('api-key-form');
-const apiKeyInput = document.getElementById('api-key-input');
-const skipKey = document.getElementById('skip-key');
 const particles = document.getElementById('particles');
 
 // ── Date ─────────────────────────────────────────────────
@@ -209,38 +204,29 @@ function renderAIMessages() {
 }
 
 async function callGemini(prompt) {
-  if (!apiKey) {
-    return 'Please set Gemini API key for real AI. Mock: Good idea for "' + prompt + '"! Priority: high. Subtasks: 1. Plan 2. Execute 3. Review.';
-  }
   try {
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", {
+    const response = await fetch('/api/gemini', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: "You are an AI Todo Assistant. Current tasks: " + JSON.stringify(tasks.slice(0,10)) + ". Use context for knowledge, decisions, breakdowns, priorities. Query: " + prompt + ". Be concise, actionable. Use markdown for lists."
-          }]
-        }]
+        prompt,
+        tasks: tasks.slice(0, 10)
       })
     });
     const data = await response.json();
     if (!response.ok) {
-      const message = data.error && data.error.message ? data.error.message : 'Unknown Gemini API error';
-      console.error('Gemini API error:', data);
-      return 'Gemini API error: ' + message;
+      const message = data.error || 'Unknown AI API error';
+      console.error('AI API error:', data);
+      return 'AI API error: ' + message;
     }
-    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-      return data.candidates[0].content.parts[0].text;
+    if (data.text) {
+      return data.text;
     }
   } catch (e) {
     console.error('AI error:', e);
-    return 'Network error while calling Gemini: ' + e.message;
+    return 'Network error while calling AI backend: ' + e.message;
   }
-  return 'Gemini returned no text. Please check the browser console for details.';
+  return 'AI backend returned no text. Please check the browser console for details.';
 }
 
 async function sendAIMessage() {
@@ -291,24 +277,9 @@ aiInput.addEventListener('keydown', e => {
   }
 });
 
-// API Key Modal
-apiKeyForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  apiKey = apiKeyInput.value.trim();
-  if (apiKey) {
-    localStorage.setItem('geminiApiKey', apiKey);
-  }
-  apiKeyModal.classList.add('hidden');
-});
-skipKey.addEventListener('click', () => apiKeyModal.classList.add('hidden'));
-
 function init() {
   document.documentElement.dataset.theme = currentTheme;
-  if (!apiKey) {
-    apiKeyModal.classList.remove('hidden');
-  } else {
-    apiKeyInput.value = apiKey;
-  }
+  localStorage.removeItem('geminiApiKey');
   renderAIMessages();
   createParticles();
   render();
