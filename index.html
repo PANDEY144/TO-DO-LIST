@@ -1,8 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- PWA - serve via http server for full features (e.g. python -m http.server) -->
+  <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiQUkgVG9kbyBNYW5hZ2VyIiwic2hvcnRfbmFtZSI6IkFJIFRvZG8iLCJkZXNjcmlwdGlvbiI6IkV5ZS1jYXRjaGluZyB0b2RvIHdpdGggR2VtaW5pIEFJIiwiZGlzcGxheSI6InN0YW5kYWxvbmUifQ==">
+  <meta name="theme-color" content="#c8f135">
   <title>Tasks</title>
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
@@ -10,11 +13,14 @@
 <body>
 
   <div class="noise"></div>
+  <div class="particles" id="particles"></div>
 
   <main class="container">
     <header>
       <div class="header-top">
-        <span class="tag">TASK MANAGER</span>
+        <span class="tag">AI TASK MANAGER</span>
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">☀️</button>
+        <button class="ai-toggle" id="ai-toggle" aria-label="AI Assistant">🤖</button>
         <span class="date" id="current-date"></span>
       </div>
       <h1>DO.<br>THE.<br>WORK.<br>YOUR.<BR>WAY.</BR></h1>
@@ -64,10 +70,35 @@
 
     <div class="empty-state" id="empty-state">
       <span class="empty-icon">◎</span>
-      <p>Nothing here yet.<br/>Add your first task above.</p>
+      <p>Nothing here yet.<br/>Add your first task above. Ask AI for ideas!</p>
+    </div>
+
+    <!-- AI Chat Panel -->
+    <div class="ai-panel" id="ai-panel">
+      <div class="ai-header">
+        <h3 class="ai-title">AI Assistant</h3>
+        <button class="ai-toggle" id="ai-close">✕</button>
+      </div>
+      <div class="ai-messages" id="ai-messages"></div>
+      <div class="ai-input-wrap">
+        <input type="text" id="ai-input" placeholder="Ask AI for task ideas, decisions..." />
+        <button id="ai-send">Send</button>
+      </div>
     </div>
   </main>
 
+  <!-- API Key Modal -->
+  <div id="api-key-modal" class="hidden">
+    <form id="api-key-form">
+      <h3>Enter Gemini API Key</h3>
+      <p>Free from <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a></p>
+      <input type="password" id="api-key-input" placeholder="AIzaSy..." required />
+      <button type="submit">Save & Continue</button>
+      <button type="button" id="skip-key">Skip (Mock AI)</button>
+    </form>
+  </div>
+
+  <!-- SW blocked in file:// - use live server for PWA -->
   <script src="app.js"></script>
 </body>
 </html>
