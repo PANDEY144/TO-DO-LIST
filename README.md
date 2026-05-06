@@ -45,3 +45,5 @@ python3 server.py
 ```
 
 Then open `http://localhost:8000`. The browser calls `/api/gemini`, and the server reads the key from `.env`, so the API key is not exposed in frontend JavaScript.
+
+
