@@ -5,25 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <!-- PWA - serve via http server for full features (e.g. python -m http.server) -->
   <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiQUkgVG9kbyBNYW5hZ2VyIiwic2hvcnRfbmFtZSI6IkFJIFRvZG8iLCJkZXNjcmlwdGlvbiI6IkV5ZS1jYXRjaGluZyB0b2RvIHdpdGggR2VtaW5pIEFJIiwiZGlzcGxheSI6InN0YW5kYWxvbmUifQ==">
-  <meta name="theme-color" content="#c8f135">
-  <title>Tasks</title>
+  <meta name="theme-color" content="#101828">
+  <title>TaskFlow AI</title>
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
 </head>
 <body>
 
-  <div class="noise"></div>
   <div class="particles" id="particles"></div>
 
   <main class="container">
-    <header>
+    <header class="app-header">
       <div class="header-top">
-        <span class="tag">AI TASK MANAGER</span>
-        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">☀️</button>
-        <button class="ai-toggle" id="ai-toggle" aria-label="AI Assistant">🤖</button>
+        <div>
+          <span class="tag">TaskFlow AI</span>
+          <p class="eyebrow">Plan, prioritize, finish.</p>
+        </div>
+        <div class="header-actions">
+          <button class="icon-btn theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle theme">
+            <span aria-hidden="true">◐</span>
+          </button>
+          <button class="icon-btn ai-toggle" id="ai-toggle" type="button" aria-label="Open AI assistant" title="Open AI assistant">
+            <span aria-hidden="true">AI</span>
+          </button>
+        </div>
         <span class="date" id="current-date"></span>
       </div>
-      <h1>DO.<br>THE.<br>WORK.<br>YOUR.<BR>WAY.</BR></h1>
+      <div class="hero-copy">
+        <h1>Your day, organized with AI.</h1>
+        <p>Capture tasks fast, track progress clearly, and ask the assistant to break down work when your brain wants backup.</p>
+      </div>
       <div class="stats-bar">
         <div class="stat">
           <span class="stat-num" id="total-count">0</span>
@@ -45,46 +56,70 @@
       </div>
     </header>
 
-    <section class="input-section">
-      <div class="input-wrap">
-        <input type="text" id="task-input" placeholder="Add a new task..." maxlength="80" autocomplete="off"/>
-        <button id="add-btn" aria-label="Add task">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <line x1="10" y1="3" x2="10" y2="17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-            <line x1="3" y1="10" x2="17" y2="10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-          </svg>
-        </button>
-      </div>
-    </section>
+    <div class="app-grid">
+      <section class="workspace" aria-label="Task workspace">
+        <section class="input-section">
+          <div class="input-wrap">
+            <input type="text" id="task-input" placeholder="Add a task, idea, or reminder..." maxlength="100" autocomplete="off"/>
+            <button id="add-btn" type="button" aria-label="Add task" title="Add task">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <line x1="10" y1="3" x2="10" y2="17" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="3" y1="10" x2="17" y2="10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+        </section>
 
-    <section class="filter-bar">
-      <button class="filter-btn active" data-filter="all">All</button>
-      <button class="filter-btn" data-filter="active">Active</button>
-      <button class="filter-btn" data-filter="done">Done</button>
-      <button class="clear-btn" id="clear-done">Clear Done</button>
-    </section>
+        <section class="filter-bar" aria-label="Task filters">
+          <button class="filter-btn active" type="button" data-filter="all">All</button>
+          <button class="filter-btn" type="button" data-filter="active">Active</button>
+          <button class="filter-btn" type="button" data-filter="done">Done</button>
+          <button class="clear-btn" type="button" id="clear-done">Clear done</button>
+        </section>
 
-    <ul class="task-list" id="task-list">
-      <!-- tasks injected here -->
-    </ul>
+        <ul class="task-list" id="task-list">
+          <!-- tasks injected here -->
+        </ul>
 
-    <div class="empty-state" id="empty-state">
-      <span class="empty-icon">◎</span>
-      <p>Nothing here yet.<br/>Add your first task above. Ask AI for ideas!</p>
+        <div class="empty-state" id="empty-state">
+          <span class="empty-icon" aria-hidden="true">+</span>
+          <h2>No tasks yet</h2>
+          <p>Add your first task or ask AI to turn a goal into a focused checklist.</p>
+        </div>
+      </section>
+
+      <aside class="assistant-card" aria-label="AI assistant summary">
+        <div class="assistant-card-top">
+          <span class="assistant-kicker">Assistant</span>
+          <strong>Plan smarter</strong>
+        </div>
+        <p>Use AI for task breakdowns, priority calls, and quick next steps based on your current list.</p>
+        <div class="prompt-row">
+          <button class="prompt-chip" type="button" data-prompt="Prioritize my current tasks and tell me what to do first.">Prioritize</button>
+          <button class="prompt-chip" type="button" data-prompt="Break my active tasks into smaller steps.">Break down</button>
+          <button class="prompt-chip" type="button" data-prompt="Suggest a focused 30 minute plan from my current tasks.">30 min plan</button>
+        </div>
+        <button class="open-assistant" type="button" id="assistant-open">Open assistant</button>
+      </aside>
     </div>
 
-    <!-- AI Chat Panel -->
-    <div class="ai-panel" id="ai-panel">
+    <section class="ai-panel" id="ai-panel" aria-label="AI assistant" aria-hidden="true">
       <div class="ai-header">
-        <h3 class="ai-title">AI Assistant</h3>
-        <button class="ai-toggle" id="ai-close">✕</button>
+        <div>
+          <span class="assistant-kicker">Gemini powered</span>
+          <h2 class="ai-title">AI Assistant</h2>
+        </div>
+        <div class="ai-header-actions">
+          <button class="ghost-btn" id="ai-clear" type="button">Clear</button>
+          <button class="icon-btn ai-close" id="ai-close" type="button" aria-label="Close AI assistant" title="Close assistant">x</button>
+        </div>
       </div>
       <div class="ai-messages" id="ai-messages"></div>
       <div class="ai-input-wrap">
-        <input type="text" id="ai-input" placeholder="Ask AI for task ideas, decisions..." />
-        <button id="ai-send">Send</button>
+        <input type="text" id="ai-input" placeholder="Ask for a plan, priority, or breakdown..." />
+        <button id="ai-send" type="button">Send</button>
       </div>
-    </div>
+    </section>
   </main>
 
   <!-- SW blocked in file:// - use live server for PWA -->
